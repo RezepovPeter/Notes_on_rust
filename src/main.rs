@@ -20,7 +20,7 @@ fn main() {
     conn.execute(
         "
     CREATE TABLE IF NOT EXISTS notes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY,
         title TEXT NOT NULL,
         content TEXT NOT NULL
     );",

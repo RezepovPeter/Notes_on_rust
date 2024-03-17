@@ -4,6 +4,10 @@ use rusqlite::{ Connection, params };
 pub fn add_note(conn: &Connection) {
     let mut tittle = String::new();
     let mut content = String::new();
+    let mut stmt = conn
+        .prepare("SELECT MAX(id) FROM notes")
+        .expect(format!("{}", "Failed to prepare a statement".red()).as_str());
+    let max_id = stmt.query_row([], |row| row.get(0)).unwrap_or(0);
 
     std::io
         ::stdin()
@@ -15,8 +19,8 @@ pub fn add_note(conn: &Connection) {
         .expect(format!("{}", "Failed to read a string".red()).as_str());
 
     conn.execute(
-        "INSERT INTO notes (title, content) VALUES (?1, ?2)",
-        params![tittle.trim(), content.trim()]
+        "INSERT INTO notes (id, title, content) VALUES (?1, ?2, ?3)",
+        params![max_id + 1, tittle.trim(), content.trim()]
     ).expect(format!("{}", "Failed to add note".red()).as_str());
 }
 
@@ -24,17 +28,7 @@ pub fn remove_note(conn: &Connection, id: String) {
     conn.execute("DELETE FROM notes WHERE id =?1", params![id.trim()]).expect(
         format!("{}", "Failed to remove note".red()).as_str()
     );
-
-    recalculate_ids(conn, id);
-}
-
-fn recalculate_ids(conn: &Connection, deleted_id: String) {
-    let mut stmt = conn
-        .prepare(
-            "UPDATE notes SET id = (SELECT rowid - 1 FROM notes WHERE rowid > ?) WHERE rowid > ?"
-        )
-        .expect(
-            format!("{}", "Unable to prepare statement while recalculating ids".red()).as_str()
-        );
-    stmt.execute(&[&deleted_id, &deleted_id]).expect("failed to recalculate ids");
+    conn.execute("UPDATE notes SET id = id - 1 WHERE id > ?1", params![id.trim()]).expect(
+        format!("{}", "Failed to update ids".red()).as_str()
+    );
 }
