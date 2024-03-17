@@ -8,13 +8,13 @@ use colored::*;
 use manage_notes::add_note;
 use manage_notes::remove_note;
 use note_struct::Note;
-//use view_notes::view_note;
+use view_notes::view_note;
 use view_notes::view_all_notes;
 
 fn main() {
     println!("{}", "========A program for notes=========".blue());
     let conn = Connection::open("../notes/database.db").expect(
-        format!("{}", "Failed to open database").as_str()
+        format!("{}", "Failed to open database".red()).as_str()
     );
 
     conn.execute(
@@ -25,7 +25,7 @@ fn main() {
         content TEXT NOT NULL
     );",
         []
-    ).expect("Failed to create table");
+    ).expect(format!("{}", "Failed to create notes table".red()).as_str());
 
     loop {
         println!(
@@ -33,9 +33,7 @@ fn main() {
         );
         let mut option = String::new();
         match io::stdin().read_line(&mut option) {
-            Ok(_) => {
-                println!("{}", "Succesful reading".green());
-            }
+            Ok(_) => {}
             Err(_) => {
                 println!("{}", "Failed to read a string".red());
                 continue;
@@ -56,7 +54,16 @@ fn main() {
                     .expect(format!("{}", "Failed to read a string".red()).as_str());
                 remove_note(&conn, id);
             }
-            //"3" => view_note(&conn),
+            "3" => {
+                println!("enter the id of the note you want to view");
+                let mut id = String::new();
+                std::io
+                    ::stdin()
+                    .read_line(&mut id)
+                    .expect(format!("{}", "Failed to read a string".red()).as_str());
+                let note = view_note(&conn, id);
+                println!("title: {}\ncontent: {}", note.title, note.content);
+            }
             "4" => {
                 let all_notes: Vec<Note> = view_all_notes(&conn);
                 for note in all_notes {

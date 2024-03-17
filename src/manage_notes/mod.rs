@@ -17,12 +17,12 @@ pub fn add_note(conn: &Connection) {
     conn.execute(
         "INSERT INTO notes (title, content) VALUES (?1, ?2)",
         params![tittle.trim(), content.trim()]
-    ).expect("Failed to add note");
+    ).expect(format!("{}", "Failed to add note".red()).as_str());
 }
 
 pub fn remove_note(conn: &Connection, id: String) {
     conn.execute("DELETE FROM notes WHERE id =?1", params![id.trim()]).expect(
-        "Failed to remove note"
+        format!("{}", "Failed to remove note".red()).as_str()
     );
 
     recalculate_ids(conn, id);
@@ -33,6 +33,8 @@ fn recalculate_ids(conn: &Connection, deleted_id: String) {
         .prepare(
             "UPDATE notes SET id = (SELECT rowid - 1 FROM notes WHERE rowid > ?) WHERE rowid > ?"
         )
-        .expect("Unable to prepare statement while recalculating ids");
+        .expect(
+            format!("{}", "Unable to prepare statement while recalculating ids".red()).as_str()
+        );
     stmt.execute(&[&deleted_id, &deleted_id]).expect("failed to recalculate ids");
 }
