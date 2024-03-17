@@ -20,15 +20,19 @@ pub fn add_note(conn: &Connection) {
     ).expect("Failed to add note");
 }
 
-pub fn remove_note(conn: &Connection) {
-    let mut id = String::new();
-
-    std::io
-        ::stdin()
-        .read_line(&mut id)
-        .expect(format!("{}", "Failed to read a string".red()).as_str());
-
+pub fn remove_note(conn: &Connection, id: String) {
     conn.execute("DELETE FROM notes WHERE id =?1", params![id.trim()]).expect(
         "Failed to remove note"
     );
+
+    recalculate_ids(conn, id);
+}
+
+fn recalculate_ids(conn: &Connection, deleted_id: String) {
+    let mut stmt = conn
+        .prepare(
+            "UPDATE notes SET id = (SELECT rowid - 1 FROM notes WHERE rowid > ?) WHERE rowid > ?"
+        )
+        .expect("Unable to prepare statement while recalculating ids");
+    stmt.execute(&[&deleted_id, &deleted_id]).expect("failed to recalculate ids");
 }

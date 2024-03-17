@@ -49,7 +49,12 @@ fn main() {
             }
             "2" => {
                 println!("enter the id of the note you want to delete");
-                remove_note(&conn);
+                let mut id = String::new();
+                std::io
+                    ::stdin()
+                    .read_line(&mut id)
+                    .expect(format!("{}", "Failed to read a string".red()).as_str());
+                remove_note(&conn, id);
             }
             //"3" => view_note(&conn),
             "4" => {
