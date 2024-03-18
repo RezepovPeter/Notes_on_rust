@@ -9,6 +9,7 @@ use colored::*;
 use manage_notes::add_note;
 use manage_notes::remove_note;
 use structs::Note;
+use structs::User;
 use manage_users::login;
 use manage_users::register;
 use view_notes::view_note;
@@ -36,6 +37,7 @@ fn main() {
     );
 
     let mut is_not_logged_in = true;
+    let mut user = User { id: 0, username: String::new(), password: String::new() };
 
     while is_not_logged_in {
         println!("Please\n1 - log in or\n2 - create an account");
@@ -57,7 +59,13 @@ fn main() {
 
         match option.trim() {
             "1" => {
-                let user = login(&conn, username, password).unwrap();
+                user = match login(&conn, username, password) {
+                    Ok(user) => user,
+                    Err(e) => {
+                        println!("{}", e);
+                        continue;
+                    }
+                };
                 println!("Welcome {}", user.username);
                 is_not_logged_in = false;
             }
@@ -86,32 +94,67 @@ fn main() {
 
         match option.trim() {
             "1" => {
-                println!("Enter the title of the note, then enter the content of the note");
-                add_note(&conn);
+                println!("Enter the title of the note");
+                let mut title = String::new();
+                std::io
+                    ::stdin()
+                    .read_line(&mut title)
+                    .expect(format!("{}", "Failed to read a string".red()).as_str());
+                println!("enter the content of the note");
+                let mut content = String::new();
+                std::io
+                    ::stdin()
+                    .read_line(&mut content)
+                    .expect(format!("{}", "Failed to read a string".red()).as_str());
+                println!("Do you want to make the note private? (y/n)");
+                let mut is_private = String::new();
+                std::io
+                    ::stdin()
+                    .read_line(&mut is_private)
+                    .expect(format!("{}", "Failed to read a string".red()).as_str());
+                match is_private.trim() {
+                    "y" => {
+                        add_note(&conn, title, content, true, user.id);
+                    }
+                    "n" => {
+                        add_note(&conn, title, content, false, user.id);
+                    }
+                    _ => {
+                        println!("Invalid option");
+                    }
+                }
             }
             "2" => {
-                println!("enter the id of the note you want to delete");
-                let mut id = String::new();
+                println!("enter the title of the note you want to delete");
+                let mut title = String::new();
                 std::io
                     ::stdin()
-                    .read_line(&mut id)
+                    .read_line(&mut title)
                     .expect(format!("{}", "Failed to read a string".red()).as_str());
-                remove_note(&conn, id);
+                remove_note(&conn, title, user.id);
             }
             "3" => {
-                println!("enter the id of the note you want to view");
-                let mut id = String::new();
+                println!("enter the title of the note you want to view");
+                let mut title = String::new();
                 std::io
                     ::stdin()
-                    .read_line(&mut id)
+                    .read_line(&mut title)
                     .expect(format!("{}", "Failed to read a string".red()).as_str());
-                let note = view_note(&conn, id);
+                let note = match view_note(&conn, title, user.id) {
+                    Some(note) => note,
+                    None => {
+                        println!("{}", "Failed to find the note".red());
+                        continue;
+                    }
+                };
                 println!("title: {}\ncontent: {}", note.title, note.content);
             }
             "4" => {
-                let all_notes: Vec<Note> = view_all_notes(&conn);
+                let all_notes: Vec<Note> = view_all_notes(&conn, user.id);
                 for note in all_notes {
-                    println!("{} - {}", note.id, note.title);
+                    if !note.is_private || note.author_id == user.id {
+                        println!("title: {}", note.title);
+                    }
                 }
             }
             "5" => {

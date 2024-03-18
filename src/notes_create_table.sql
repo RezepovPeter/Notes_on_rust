@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS notes (
     posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_private BOOL DEFAULT FALSE,
     author_id INTEGER,
-    FOREIGN KEY (author_id) REFERENCES Users(user_id)
+    FOREIGN KEY (author_id) REFERENCES users(id)
 );
