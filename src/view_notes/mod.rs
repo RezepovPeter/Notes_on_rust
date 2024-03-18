@@ -1,4 +1,4 @@
-use crate::note_struct::Note;
+use crate::structs::Note;
 use colored::Colorize;
 use rusqlite::Connection;
 

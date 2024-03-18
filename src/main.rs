@@ -1,13 +1,16 @@
 mod manage_notes;
+mod manage_users;
 mod view_notes;
-mod note_struct;
+mod structs;
 
 use std::io;
 use rusqlite::*;
 use colored::*;
 use manage_notes::add_note;
 use manage_notes::remove_note;
-use note_struct::Note;
+use structs::Note;
+use manage_users::login;
+use manage_users::register;
 use view_notes::view_note;
 use view_notes::view_all_notes;
 
@@ -16,16 +19,57 @@ fn main() {
     let conn = Connection::open("../notes/database.db").expect(
         format!("{}", "Failed to open database".red()).as_str()
     );
+    let notes_create_table = std::fs
+        ::read_to_string("../notes/src/notes_create_table.sql")
+        .expect(format!("{}", "Failed to read file".red()).as_str());
 
-    conn.execute(
-        "
-    CREATE TABLE IF NOT EXISTS notes (
-        id INTEGER PRIMARY KEY,
-        title TEXT NOT NULL,
-        content TEXT NOT NULL
-    );",
-        []
-    ).expect(format!("{}", "Failed to create notes table".red()).as_str());
+    let users_create_table = std::fs
+        ::read_to_string("../notes/src/users_create_table.sql")
+        .expect(format!("{}", "Failed to read file".red()).as_str());
+
+    conn.execute_batch(&notes_create_table).expect(
+        format!("{}", "Failed to create notes table".red()).as_str()
+    );
+
+    conn.execute_batch(&users_create_table).expect(
+        format!("{}", "Failed to create notes table".red()).as_str()
+    );
+
+    let mut is_not_logged_in = true;
+
+    while is_not_logged_in {
+        println!("Please\n1 - log in or\n2 - create an account");
+        let mut option = String::new();
+        io::stdin()
+            .read_line(&mut option)
+            .expect(format!("{}", "Failed to read option".red()).as_str());
+
+        let mut username = String::new();
+        let mut password = String::new();
+        println!("Please enter your username");
+        io::stdin()
+            .read_line(&mut username)
+            .expect(format!("{}", "Failed to read username".red()).as_str());
+        println!("Please enter your password");
+        io::stdin()
+            .read_line(&mut password)
+            .expect(format!("{}", "Failed to read password".red()).as_str());
+
+        match option.trim() {
+            "1" => {
+                let user = login(&conn, username, password).unwrap();
+                println!("Welcome {}", user.username);
+                is_not_logged_in = false;
+            }
+
+            "2" => {
+                register(&conn, username, password);
+            }
+            _ => {
+                println!("Invalid option");
+            }
+        }
+    }
 
     loop {
         println!(

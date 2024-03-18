@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL UNIQUE,
+    content TEXT NOT NULL,
+    posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_private BOOL DEFAULT FALSE,
+    author_id INTEGER,
+    FOREIGN KEY (author_id) REFERENCES Users(user_id)
+);
