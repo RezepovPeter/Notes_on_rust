@@ -28,7 +28,6 @@ pub fn view_all_notes(conn: &Connection, user_id: i32) -> Vec<Note> {
     return collected_notes;
 }
 
-// TODO: fix vulnerable code
 pub fn view_note(conn: &Connection, title: String, user_id: i32) -> Option<Note> {
     let mut stmt = conn
         .prepare("SELECT * FROM notes WHERE title = ?1")
