@@ -11,6 +11,6 @@ pub fn add_note(conn: &Connection, title: String, content: String, is_private: b
 pub fn remove_note(conn: &Connection, title: String, user_id: i32) {
     conn.execute(
         "DELETE FROM notes WHERE title =?1 AND author_id = ?2",
-        params![title, user_id]
+        params![title.trim(), user_id]
     ).expect(format!("{}", "Failed to remove note".red()).as_str());
 }

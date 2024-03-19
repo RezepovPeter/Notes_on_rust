@@ -28,6 +28,7 @@ pub fn view_all_notes(conn: &Connection, user_id: i32) -> Vec<Note> {
     return collected_notes;
 }
 
+// TODO: fix vulnerable code
 pub fn view_note(conn: &Connection, title: String, user_id: i32) -> Option<Note> {
     let mut stmt = conn
         .prepare("SELECT * FROM notes WHERE title = ?1")
@@ -45,7 +46,12 @@ pub fn view_note(conn: &Connection, title: String, user_id: i32) -> Option<Note>
         })
         .expect(format!("{}", "Query failed".red()).as_str());
     if let Some(note) = notes.next() {
-        return note.ok();
+        let unwrap_note = note.unwrap();
+        if !unwrap_note.is_private || unwrap_note.author_id == user_id {
+            return Some(unwrap_note);
+        } else {
+            return None;
+        }
     } else {
         return None;
     }
